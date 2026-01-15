@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Главная страница проекта</title>
+</head>
+<body>
+    <h1>Добро пожаловать!</h1>
+    <ul>
+        <li><a href="/admin/">Админка</a></li>
+        <li><a href="/api/">API</a></li>
+        {% if user.is_authenticated %}
+            <li><a href="{% url 'task_list' %}">Мои задачи</a></li>
+            <li><a href="{% url 'task_add' %}">Добавить задачу</a></li>
+            <li><a href="{% url 'logout' %}">Выйти</a></li>
+        {% else %}
+            <li><a href="{% url 'login' %}">Войти</a></li>
+            <li><a href="{% url 'register' %}">Регистрация</a></li>
+        {% endif %}
+    </ul>
+</body>
+</html>

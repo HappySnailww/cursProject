@@ -1,0 +1,19 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+          content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Удаление задачи</title>
+</head>
+<body>
+    <h1>Удалить задачу</h1>
+    <p>Вы уверены, что хотите удалить задачу "{{ task.title }}"?</p>
+    <form method="post">
+        {% csrf_token %}
+        <button type="submit">Да, удалить</button>
+        <a href="{% url 'task_list' %}">Отмена</a>
+    </form>
+</body>
+</html>

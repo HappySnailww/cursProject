@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Добавить задачу</title>
+</head>
+<body>
+    <h1>{% if edit %}Редактировать{% else %}Добавить{% endif %} задачу</h1>
+    <form method="post">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit">{% if edit %}Сохранить изменения{% else %}Добавить{% endif %}</button>
+    </form>
+    <a href="{% url 'task_list' %}">Назад к списку задач</a>
+
+    {% for message in messages %}
+    <p>{{ message }}</p>
+    {% endfor %}
+</body>
+</html>

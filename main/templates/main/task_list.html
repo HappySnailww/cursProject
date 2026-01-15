@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Список задач</title>
+</head>
+<body>
+    <h1>Мои задачи</h1>
+
+    <p>
+        <a href="{% url 'task_add' %}">Добавить задачу</a> |
+        <a href="/api/">API</a> |
+        <a href="/admin/">Админка</a> |
+        <a href="{% url 'logout' %}">Выйти</a>
+    </p>
+
+    {% if tasks %}
+        <ul>
+        {% for task in tasks %}
+            <li style="margin-bottom:20px;">
+                <strong>{{ task.title }}</strong> ({{ task.get_status_display }}) - {{ task.due_date|date:"d.m.Y H:i" }}<br>
+                <em>{{ task.description }}</em><br>
+                <a href="{% url 'task_edit' task.id %}">Редактировать</a> |
+                <a href="{% url 'task_delete' task.id %}">Удалить</a>
+
+                <ul>
+                {% for comment in task.comments.all %}
+                    <li>{{ comment.user.username }}: {{ comment.text }} ({{ comment.created_at|date:"d.m.Y H:i" }})</li>
+                {% empty %}
+                    <li>Комментариев нет</li>
+                {% endfor %}
+                </ul>
+
+                <form method="post" action="{% url 'comment_add' task.id %}">
+                    {% csrf_token %}
+                    <input type="text" name="text" placeholder="Добавить комментарий" required>
+                    <button type="submit">Отправить</button>
+                </form>
+            </li>
+        {% endfor %}
+        </ul>
+    {% else %}
+        <p>У вас нет задач.</p>
+    {% endif %}
+</body>
+</html>

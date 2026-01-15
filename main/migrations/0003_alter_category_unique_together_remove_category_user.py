@@ -6,16 +6,16 @@ from django.db import migrations
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('main', '0002_remove_task_assignees'),
+        ("main", "0002_remove_task_assignees"),
     ]
 
     operations = [
         migrations.AlterUniqueTogether(
-            name='category',
-            unique_together={('title',)},
+            name="category",
+            unique_together={("title",)},
         ),
         migrations.RemoveField(
-            model_name='category',
-            name='user',
+            model_name="category",
+            name="user",
         ),
     ]

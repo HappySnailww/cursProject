@@ -15,54 +15,205 @@ class Migration(migrations.Migration):
 
     operations = [
         migrations.CreateModel(
-            name='Category',
+            name="Category",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('title', models.CharField(max_length=50, verbose_name='Название')),
-                ('color', models.CharField(choices=[('#FF0000', 'Красный'), ('#00FF00', 'Зеленый'), ('#FFFF00', 'Желтый'), ('#0000FF', 'Синий'), ('#FFA500', 'Оранжевый'), ('#800080', 'Фиолетовый'), ('#FFC0CB', 'Розовый'), ('#A52A2A', 'Коричневый'), ('#808080', 'Серый'), ('#FFFFFF', 'Белый')], default='#FFFFFF', max_length=7, verbose_name='Цвет')),
-                ('user', models.ForeignKey(help_text='Владелец категории', on_delete=django.db.models.deletion.CASCADE, related_name='categorys', to=settings.AUTH_USER_MODEL, verbose_name='Пользователь')),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("title", models.CharField(max_length=50, verbose_name="Название")),
+                (
+                    "color",
+                    models.CharField(
+                        choices=[
+                            ("#FF0000", "Красный"),
+                            ("#00FF00", "Зеленый"),
+                            ("#FFFF00", "Желтый"),
+                            ("#0000FF", "Синий"),
+                            ("#FFA500", "Оранжевый"),
+                            ("#800080", "Фиолетовый"),
+                            ("#FFC0CB", "Розовый"),
+                            ("#A52A2A", "Коричневый"),
+                            ("#808080", "Серый"),
+                            ("#FFFFFF", "Белый"),
+                        ],
+                        default="#FFFFFF",
+                        max_length=7,
+                        verbose_name="Цвет",
+                    ),
+                ),
+                (
+                    "user",
+                    models.ForeignKey(
+                        help_text="Владелец категории",
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="categorys",
+                        to=settings.AUTH_USER_MODEL,
+                        verbose_name="Пользователь",
+                    ),
+                ),
             ],
             options={
-                'verbose_name': 'Категория',
-                'verbose_name_plural': 'Категории',
-                'unique_together': {('title', 'user')},
+                "verbose_name": "Категория",
+                "verbose_name_plural": "Категории",
+                "unique_together": {("title", "user")},
             },
         ),
         migrations.CreateModel(
-            name='Task',
+            name="Task",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('title', models.CharField(max_length=50, verbose_name='Название')),
-                ('description', models.TextField(verbose_name='Описание')),
-                ('status', models.CharField(choices=[('pending', 'В ожидании'), ('in_progress', 'В процессе'), ('completed', 'Выполнено')], default='pending', max_length=20, verbose_name='Статус')),
-                ('priority', models.PositiveIntegerField(choices=[(1, 'Низкий'), (2, 'Средний'), (3, 'Высокий'), (4, 'Критический')], default=2, verbose_name='Приоритет')),
-                ('due_date', models.DateTimeField(verbose_name='Срок выполнения')),
-                ('creation_date', models.DateTimeField(verbose_name='Дата создания')),
-                ('update_date', models.DateTimeField(verbose_name='Дата обновления')),
-                ('assignees', models.ManyToManyField(blank=True, help_text='Пользователи, ответственные за выполнение', related_name='assigned_tasks', to=settings.AUTH_USER_MODEL, verbose_name='Исполнители')),
-                ('category', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, to='main.category', verbose_name='Категория')),
-                ('user', models.ForeignKey(help_text='Пользователь, создавший задачу', on_delete=django.db.models.deletion.CASCADE, related_name='tasks', to=settings.AUTH_USER_MODEL, verbose_name='Владелец')),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("title", models.CharField(max_length=50, verbose_name="Название")),
+                ("description", models.TextField(verbose_name="Описание")),
+                (
+                    "status",
+                    models.CharField(
+                        choices=[
+                            ("pending", "В ожидании"),
+                            ("in_progress", "В процессе"),
+                            ("completed", "Выполнено"),
+                        ],
+                        default="pending",
+                        max_length=20,
+                        verbose_name="Статус",
+                    ),
+                ),
+                (
+                    "priority",
+                    models.PositiveIntegerField(
+                        choices=[
+                            (1, "Низкий"),
+                            (2, "Средний"),
+                            (3, "Высокий"),
+                            (4, "Критический"),
+                        ],
+                        default=2,
+                        verbose_name="Приоритет",
+                    ),
+                ),
+                ("due_date", models.DateTimeField(verbose_name="Срок выполнения")),
+                ("creation_date", models.DateTimeField(verbose_name="Дата создания")),
+                ("update_date", models.DateTimeField(verbose_name="Дата обновления")),
+                (
+                    "assignees",
+                    models.ManyToManyField(
+                        blank=True,
+                        help_text="Пользователи, ответственные за выполнение",
+                        related_name="assigned_tasks",
+                        to=settings.AUTH_USER_MODEL,
+                        verbose_name="Исполнители",
+                    ),
+                ),
+                (
+                    "category",
+                    models.ForeignKey(
+                        blank=True,
+                        null=True,
+                        on_delete=django.db.models.deletion.SET_NULL,
+                        to="main.category",
+                        verbose_name="Категория",
+                    ),
+                ),
+                (
+                    "user",
+                    models.ForeignKey(
+                        help_text="Пользователь, создавший задачу",
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="tasks",
+                        to=settings.AUTH_USER_MODEL,
+                        verbose_name="Владелец",
+                    ),
+                ),
             ],
             options={
-                'verbose_name': 'Задача',
-                'verbose_name_plural': 'Задачи',
+                "verbose_name": "Задача",
+                "verbose_name_plural": "Задачи",
             },
         ),
         migrations.CreateModel(
-            name='Comment',
+            name="Comment",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('text', models.TextField(help_text='Максимальная длина 1000 символов', max_length=1000, verbose_name='Текст комментария')),
-                ('created_at', models.DateTimeField(auto_now_add=True, help_text='Дата и время создания комментария', verbose_name='Дата создания')),
-                ('updated_at', models.DateTimeField(auto_now=True, help_text='Дата и время последнего изменения комментария', verbose_name='Дата обновления')),
-                ('user', models.ForeignKey(help_text='Пользователь, оставивший комментарий', on_delete=django.db.models.deletion.CASCADE, related_name='task_comments', to=settings.AUTH_USER_MODEL, verbose_name='Автор')),
-                ('task', models.ForeignKey(help_text='Задача, к которой оставлен комментарий', on_delete=django.db.models.deletion.CASCADE, related_name='comments', to='main.task', verbose_name='Задача')),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                (
+                    "text",
+                    models.TextField(
+                        help_text="Максимальная длина 1000 символов",
+                        max_length=1000,
+                        verbose_name="Текст комментария",
+                    ),
+                ),
+                (
+                    "created_at",
+                    models.DateTimeField(
+                        auto_now_add=True,
+                        help_text="Дата и время создания комментария",
+                        verbose_name="Дата создания",
+                    ),
+                ),
+                (
+                    "updated_at",
+                    models.DateTimeField(
+                        auto_now=True,
+                        help_text="Дата и время последнего изменения комментария",
+                        verbose_name="Дата обновления",
+                    ),
+                ),
+                (
+                    "user",
+                    models.ForeignKey(
+                        help_text="Пользователь, оставивший комментарий",
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="task_comments",
+                        to=settings.AUTH_USER_MODEL,
+                        verbose_name="Автор",
+                    ),
+                ),
+                (
+                    "task",
+                    models.ForeignKey(
+                        help_text="Задача, к которой оставлен комментарий",
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="comments",
+                        to="main.task",
+                        verbose_name="Задача",
+                    ),
+                ),
             ],
             options={
-                'verbose_name': 'Комментарий',
-                'verbose_name_plural': 'Комментарии',
-                'ordering': ['-created_at'],
-                'indexes': [models.Index(fields=['task', 'created_at'], name='main_commen_task_id_296db8_idx'), models.Index(fields=['user', 'created_at'], name='main_commen_user_id_b68d8e_idx')],
+                "verbose_name": "Комментарий",
+                "verbose_name_plural": "Комментарии",
+                "ordering": ["-created_at"],
+                "indexes": [
+                    models.Index(
+                        fields=["task", "created_at"],
+                        name="main_commen_task_id_296db8_idx",
+                    ),
+                    models.Index(
+                        fields=["user", "created_at"],
+                        name="main_commen_user_id_b68d8e_idx",
+                    ),
+                ],
             },
         ),
     ]

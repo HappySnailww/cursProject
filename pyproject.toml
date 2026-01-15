@@ -1,0 +1,5 @@
+[tool.isort]
+profile = "black"
+known_first_party = "main"
+known_django = "django"
+line_length = 88
