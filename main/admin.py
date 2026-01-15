@@ -138,9 +138,6 @@ class CategoryAdmin(ExportMixin, SimpleHistoryAdmin):
             return "\n".join(task_items)
         return "Задач нет"
 
-    task_list.short_description = 'Задачи в категории'
-
-
 @admin.register(Task)
 class TaskAdmin(ExportMixin, SimpleHistoryAdmin):
     resource_class = TaskResource
@@ -315,8 +312,3 @@ class CommentAdmin(SimpleHistoryAdmin):
 
     def get_queryset(self, request):
         return super().get_queryset(request).select_related('task', 'user')
-
-
-admin.site.site_header = "Управление задачами"
-admin.site.site_title = "Админ-панель"
-admin.site.index_title = "Менеджер задач"
