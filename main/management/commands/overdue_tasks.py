@@ -22,5 +22,5 @@ class Command(BaseCommand):
 
         for task in overdue_tasks:
             self.stdout.write(
-                f'- {task.title} | пользователь: {task.user.username} | срок: {task.due_date.strftime("%d-%m-%Y %H:%M")}'
+                f'- {task.title} | пользователь: {task.users} | срок: {task.due_date.strftime("%d-%m-%Y %H:%M")}'
             )

@@ -9,7 +9,7 @@ from .models import Category, Comment, Task
 
 class TaskResource(resources.ModelResource):
     status = fields.Field(column_name="Статус", attribute="status")
-    users = fields.Field(attribute='users', column_name='Пользователи')
+    users = fields.Field(attribute="users", column_name="Пользователи")
 
     class Meta:
         model = Task
@@ -98,11 +98,12 @@ class TaskAdmin(ExportMixin, SimpleHistoryAdmin):
         "priority",
         "due_date",
     )
-    filter_horizontal = ['users']
+    filter_horizontal = ["users"]
+
     def get_users(self, obj):
         return ", ".join([u.username for u in obj.users.all()])
 
-    get_users.short_description = 'Пользователи задачи'
+    get_users.short_description = "Пользователи задачи"
     list_display_links = ("title",)
     list_filter = ("status", "priority", "category")
     search_fields = ("title", "description")
@@ -113,12 +114,13 @@ class TaskAdmin(ExportMixin, SimpleHistoryAdmin):
 
     fieldsets = (
         (
-        "Основная информация",
-        {"fields": ("title", "description", "users", "category")},
+            "Основная информация",
+            {"fields": ("title", "description", "users", "category")},
         ),
         ("Статус и приоритет", {"fields": ("status", "priority")}),
         ("Даты", {"fields": ("due_date", "creation_date", "update_date")}),
     )
+
 
 @admin.register(Comment)
 class CommentAdmin(SimpleHistoryAdmin):

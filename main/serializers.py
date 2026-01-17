@@ -48,11 +48,9 @@ class CategorySerializer(serializers.ModelSerializer):
 class TaskSerializer(serializers.ModelSerializer):
     users = UserSerializer(many=True, read_only=True)
     user_ids = serializers.PrimaryKeyRelatedField(
-        queryset=User.objects.all(),
-        many=True,
-        write_only=True,
-        source="users"
+        queryset=User.objects.all(), many=True, write_only=True, source="users"
     )
+
     class Meta:
         model = Task
         fields = (
