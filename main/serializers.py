@@ -25,7 +25,6 @@ class UserSerializer(serializers.ModelSerializer):
         fields = (
             "id",
             "username",
-            "email",
         )
 
 
@@ -47,6 +46,13 @@ class CategorySerializer(serializers.ModelSerializer):
 
 
 class TaskSerializer(serializers.ModelSerializer):
+    users = UserSerializer(many=True, read_only=True)
+    user_ids = serializers.PrimaryKeyRelatedField(
+        queryset=User.objects.all(),
+        many=True,
+        write_only=True,
+        source="users"
+    )
     class Meta:
         model = Task
         fields = (
@@ -59,20 +65,23 @@ class TaskSerializer(serializers.ModelSerializer):
             "creation_date",
             "update_date",
             "category",
-            "user",
+            "users",
+            "user_ids",
         )
         read_only_fields = (
             "id",
             "creation_date",
             "update_date",
-            "user",
+            "users",
         )
 
     def create(self, validated_data):
-        user = self.context["request"].user
-
-        task = Task.objects.create(user=user, **validated_data)
-
+        users = validated_data.pop("users", [])
+        task = Task.objects.create(**validated_data)
+        if not users:
+            task.users.add(self.context["request"].user)
+        else:
+            task.users.set(users)
         return task
 
     def validate_title(self, value):

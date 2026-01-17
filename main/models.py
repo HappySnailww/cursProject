@@ -64,12 +64,10 @@ class Task(models.Model):
         null=True,
         blank=True,
     )
-    user = models.ForeignKey(
+    users = models.ManyToManyField(
         User,
-        on_delete=models.CASCADE,
-        verbose_name="Владелец",
+        verbose_name="Владельцы задачи",
         related_name="tasks",
-        help_text="Пользователь, создавший задачу",
     )
 
     history = HistoricalRecords()
@@ -87,7 +85,7 @@ class Task(models.Model):
         return "\n".join(result)
 
     def __str__(self):
-        return f"{self.title} ({self.user.username})"
+        return f"{self.title} ({self.users})"
 
     class Meta:
         verbose_name = "Задача"

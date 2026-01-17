@@ -12,6 +12,7 @@ from rest_framework.decorators import action
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from rest_framework.filters import OrderingFilter, SearchFilter
 
 from .forms import TaskForm
 from .models import Category, Comment, Task
@@ -67,7 +68,7 @@ def home(request):
 
 @login_required
 def task_list(request):
-    tasks = Task.objects.filter(user=request.user).order_by("-due_date")
+    tasks = Task.objects.filter(users=request.user).order_by("-due_date")
     return render(request, "main/task_list.html", {"tasks": tasks})
 
 
@@ -76,9 +77,8 @@ def task_add(request):
     if request.method == "POST":
         form = TaskForm(request.POST)
         if form.is_valid():
-            task = form.save(commit=False)
-            task.user = request.user
-            task.save()
+            task = form.save()
+            task.users.add(request.user)
             return redirect("task_list")
     else:
         form = TaskForm()
@@ -88,7 +88,7 @@ def task_add(request):
 @login_required
 def task_edit(request, pk):
     try:
-        task = Task.objects.get(pk=pk, user=request.user)
+        task = Task.objects.get(pk=pk, users=request.user)
     except Task.DoesNotExist:
         messages.error(request, "Задача не найдена или не принадлежит вам")
         return redirect("task_list")
@@ -108,7 +108,7 @@ def task_edit(request, pk):
 @login_required
 def task_delete(request, pk):
     try:
-        task = Task.objects.get(pk=pk, user=request.user)
+        task = Task.objects.get(pk=pk, users=request.user)
     except Task.DoesNotExist:
         messages.error(request, "Задача не найдена или не принадлежит вам")
         return redirect("task_list")
@@ -123,7 +123,7 @@ def task_delete(request, pk):
 
 @login_required
 def comment_add(request, task_id):
-    task = get_object_or_404(Task, pk=task_id)
+    task = get_object_or_404(Task, pk=task_id, users=request.user)
 
     if request.method == "POST":
         text = request.POST.get("text", "").strip()
@@ -168,14 +168,32 @@ class CategoryViewSet(viewsets.ReadOnlyModelViewSet):
 
 class TaskViewSet(viewsets.ModelViewSet):
     serializer_class = TaskSerializer
+
+    filter_backends = [
+        DjangoFilterBackend,
+        OrderingFilter,
+        SearchFilter,
+    ]
+    search_fields = [
+        "title",
+        "description",
+        "category__title",
+    ]
+    filterset_fields = {
+        "status": ["exact"],
+        "priority": ["exact", "gte", "lte"],
+        "due_date": ["gte", "lte"],
+    }
     permission_classes = [IsAuthenticated]
 
-    filter_backends = [DjangoFilterBackend]
-    filterset_fields = ["status"]
-
     def get_queryset(self):
-        user = self.request.user
-        return Task.objects.filter(user=user)
+        queryset = Task.objects.filter(users=self.request.user)
+
+        due_date = self.request.GET.get("due_date")
+        if due_date:
+            queryset = queryset.filter(due_date__date=due_date)
+
+        return queryset
 
     @action(methods=["GET"], detail=False, url_path="filtered-tasks")
     def filtered_tasks(self, request):
@@ -183,7 +201,7 @@ class TaskViewSet(viewsets.ModelViewSet):
         now = timezone.now()
 
         main_queryset = Task.objects.filter(
-            Q(user=user)
+            Q(users=user)
             & (Q(status="pending") | Q(status="in_progress"))
             & Q(priority__gte=3)
             & ~Q(status="completed")
@@ -191,7 +209,7 @@ class TaskViewSet(viewsets.ModelViewSet):
         )
 
         extra_queryset = Task.objects.filter(
-            Q(user=user)
+            Q(users=user)
             & Q(status="pending")
             & Q(priority__lte=2)
             & ~Q(category__title="Работа")
@@ -212,7 +230,7 @@ class TaskViewSet(viewsets.ModelViewSet):
         user = request.user
         now = timezone.now()
         tasks = Task.objects.filter(
-            user=user, due_date__lt=now, status__in=["pending", "in_progress"]
+            users=user, due_date__lt=now, status__in=["pending", "in_progress"]
         )
         page = self.paginate_queryset(tasks)
         if page is not None:
@@ -224,7 +242,7 @@ class TaskViewSet(viewsets.ModelViewSet):
     @action(methods=["POST"], detail=True, url_path="complete")
     def mark_complete(self, request, pk=None):
         try:
-            task = Task.objects.get(pk=pk, user=request.user)
+            task = Task.objects.get(pk=pk, users=request.user)
         except Task.DoesNotExist:
             return Response(
                 {"detail": "Задача не найдена или не принадлежит пользователю"},
@@ -249,5 +267,4 @@ class CommentViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         user = self.request.user
-
-        return Comment.objects.filter(task__user=user)
+        return Comment.objects.filter(task__users=user)

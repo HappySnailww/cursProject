@@ -20,6 +20,7 @@
             <li style="margin-bottom:20px;">
                 <strong>{{ task.title }}</strong> ({{ task.get_status_display }}) - {{ task.due_date|date:"d.m.Y H:i" }}<br>
                 <em>{{ task.description }}</em><br>
+                <p>Пользователи: {% for user in task.users.all %} {{ user.username }} {% endfor %}</p>
                 <a href="{% url 'task_edit' task.id %}">Редактировать</a> |
                 <a href="{% url 'task_delete' task.id %}">Удалить</a>
 

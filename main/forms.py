@@ -33,17 +33,23 @@ class LoginForm(AuthenticationForm):
 
 
 class TaskForm(forms.ModelForm):
+    users = forms.ModelMultipleChoiceField(
+        queryset=User.objects.all(),
+        widget=forms.CheckboxSelectMultiple,
+        required=False
+    )
+
     class Meta:
         model = Task
-        fields = ["title", "description", "category", "status", "priority", "due_date"]
+        fields = ["title", "description", "category", "status", "priority", "due_date", "users"]
         widgets = {
             "description": forms.Textarea(attrs={"rows": 4, "cols": 80}),
-            "due_date": forms.DateTimeInput(
-                attrs={"type": "datetime-local"}, format="%Y-%m-%dT%H:%M"
-            ),
+            "due_date": forms.DateTimeInput(attrs={"type": "datetime-local"}, format="%Y-%m-%dT%H:%M"),
         }
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         if self.instance and self.instance.due_date:
             self.initial["due_date"] = self.instance.due_date.strftime("%Y-%m-%dT%H:%M")
+        if self.instance.pk:
+            self.initial["users"] = self.instance.users.all()

@@ -9,6 +9,7 @@ from .models import Category, Comment, Task
 
 class TaskResource(resources.ModelResource):
     status = fields.Field(column_name="Статус", attribute="status")
+    users = fields.Field(attribute='users', column_name='Пользователи')
 
     class Meta:
         model = Task
@@ -16,7 +17,7 @@ class TaskResource(resources.ModelResource):
             "id",
             "title",
             "description",
-            "user__username",
+            "users",
             "category__title",
             "status",
             "priority",
@@ -25,6 +26,9 @@ class TaskResource(resources.ModelResource):
             "update_date",
         )
         export_order = fields
+
+    def dehydrate_users(self, obj):
+        return ", ".join([user.username for user in obj.users.all()])
 
     def get_export_queryset(self, request):
         queryset = super().get_export_queryset(request)
@@ -88,33 +92,37 @@ class TaskAdmin(ExportMixin, SimpleHistoryAdmin):
 
     list_display = (
         "title",
-        "user",
+        "get_users",
         "category",
         "status",
         "priority",
         "due_date",
     )
+    filter_horizontal = ['users']
+    def get_users(self, obj):
+        return ", ".join([u.username for u in obj.users.all()])
+
+    get_users.short_description = 'Пользователи задачи'
     list_display_links = ("title",)
     list_filter = ("status", "priority", "category")
     search_fields = ("title", "description")
-    raw_id_fields = ("user",)
+    raw_id_fields = ("users",)
     readonly_fields = ("creation_date", "update_date")
     date_hierarchy = "due_date"
     inlines = (CommentInline,)
 
     fieldsets = (
         (
-            "Основная информация",
-            {"fields": ("title", "description", "user", "category")},
+        "Основная информация",
+        {"fields": ("title", "description", "users", "category")},
         ),
         ("Статус и приоритет", {"fields": ("status", "priority")}),
         ("Даты", {"fields": ("due_date", "creation_date", "update_date")}),
     )
 
-
 @admin.register(Comment)
 class CommentAdmin(SimpleHistoryAdmin):
-    list_display = ("short_text", "task", "user", "created_at")
+    list_display = ("short_text", "task", "get_user", "created_at")
     list_display_links = ("short_text",)
     list_filter = ("task", "user", "created_at")
     search_fields = ("text",)
@@ -130,3 +138,7 @@ class CommentAdmin(SimpleHistoryAdmin):
     @admin.display(description="Комментарий")
     def short_text(self, obj):
         return obj.text[:50] + ("..." if len(obj.text) > 50 else "")
+
+    @admin.display(description="Пользователь")
+    def get_user(self, obj):
+        return obj.user.username if obj.user else ""
