@@ -106,6 +106,7 @@ class TaskAdmin(ExportMixin, SimpleHistoryAdmin):
     get_users.short_description = "Пользователи задачи"
     list_display_links = ("title",)
     list_filter = ("status", "priority", "category")
+    list_select_related = ("category",)
     search_fields = ("title", "description")
     raw_id_fields = ("users",)
     readonly_fields = ("creation_date", "update_date")
@@ -127,6 +128,7 @@ class CommentAdmin(SimpleHistoryAdmin):
     list_display = ("short_text", "task", "get_user", "created_at")
     list_display_links = ("short_text",)
     list_filter = ("task", "user", "created_at")
+    list_select_related = ("task","user",)
     search_fields = ("text",)
     readonly_fields = ("created_at", "updated_at")
     date_hierarchy = "created_at"

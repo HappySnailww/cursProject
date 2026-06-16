@@ -29,12 +29,14 @@ class UserSerializer(serializers.ModelSerializer):
 
 
 class CategorySerializer(serializers.ModelSerializer):
+    completed_tasks_count = serializers.IntegerField(read_only=True)
     class Meta:
         model = Category
         fields = (
             "id",
             "title",
             "color",
+            "completed_tasks_count",
         )
 
     def validate_title(self, value):
@@ -50,6 +52,10 @@ class TaskSerializer(serializers.ModelSerializer):
     user_ids = serializers.PrimaryKeyRelatedField(
         queryset=User.objects.all(), many=True, write_only=True, source="users"
     )
+    is_overdue = serializers.SerializerMethodField()
+    comments_count = serializers.IntegerField(read_only=True)
+    users_count = serializers.IntegerField(read_only=True)
+    is_owner = serializers.SerializerMethodField()
 
     class Meta:
         model = Task
@@ -65,6 +71,10 @@ class TaskSerializer(serializers.ModelSerializer):
             "category",
             "users",
             "user_ids",
+            "is_overdue",
+            "comments_count",
+            "users_count",
+            "is_owner",
         )
         read_only_fields = (
             "id",
@@ -100,6 +110,19 @@ class TaskSerializer(serializers.ModelSerializer):
         if value < timezone.now():
             raise serializers.ValidationError("Срок выполнения не может быть в прошлом")
         return value
+    
+    def get_is_overdue(self, obj):
+        return (
+            obj.due_date < timezone.now()
+            and obj.status != "completed"
+        )
+    
+    def get_is_owner(self, obj):
+        current_user = self.context.get(
+            "current_user"
+        )
+
+        return current_user in obj.users.all()
 
 
 class CommentSerializer(serializers.ModelSerializer):

@@ -7,6 +7,8 @@ from .views import (
     CategoryViewSet,
     CommentViewSet,
     TaskViewSet,
+    RegisterView,
+    LogoutView
 )
 
 router = DefaultRouter()
@@ -16,6 +18,7 @@ router.register(r"comments", CommentViewSet, basename="comment")
 
 urlpatterns = [
     path("", views.home, name="home"),
+    path("sentry-test/", views.sentry_test),
     path("tasks/", views.task_list, name="task_list"),
     path("tasks/add/", views.task_add, name="task_add"),
     path("tasks/edit/<int:pk>/", views.task_edit, name="task_edit"),
@@ -26,4 +29,6 @@ urlpatterns = [
     path("auth/logout/", views.logout_view, name="logout"),
     path("api/", include(router.urls)),
     path("api/auth/login/", obtain_auth_token, name="api_login"),
+    path("api/auth/register/", RegisterView.as_view(), name="api_register"),
+    path("api/auth/logout/", LogoutView.as_view(), name="api_logout"),
 ]

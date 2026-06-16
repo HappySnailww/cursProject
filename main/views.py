@@ -2,7 +2,8 @@ from django.contrib import messages
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
-from django.db.models import Q
+from django.db.models import Count, Q
+from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 from django_filters.rest_framework import DjangoFilterBackend
@@ -13,7 +14,9 @@ from rest_framework.filters import OrderingFilter, SearchFilter
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
+import sentry_sdk
 
+from .filters import TaskFilter
 from .forms import TaskForm
 from .models import Category, Comment, Task
 from .serializers import (
@@ -131,6 +134,17 @@ def comment_add(request, task_id):
             Comment.objects.create(task=task, user=request.user, text=text)
     return redirect("task_list")
 
+def sentry_test(request):
+    try:
+        division_by_zero = 1 / 0
+    except ZeroDivisionError:
+        sentry_sdk.capture_exception()
+        
+        last_event_id = sentry_sdk.last_event_id()
+        if last_event_id:
+            return HttpResponse(f"Ошибка отправлена. Event ID: {last_event_id}")
+        else:
+            return HttpResponse("Ошибка НЕ отправлена")
 
 class RegisterView(APIView):
     permission_classes = [AllowAny]
@@ -161,7 +175,7 @@ class LogoutView(APIView):
 
 
 class CategoryViewSet(viewsets.ReadOnlyModelViewSet):
-    queryset = Category.objects.all()
+    queryset = Category.objects.annotate(completed_tasks_count=Count("task", filter=Q(task__status="completed")))
     serializer_class = CategorySerializer
     permission_classes = [IsAuthenticated]
 
@@ -179,21 +193,33 @@ class TaskViewSet(viewsets.ModelViewSet):
         "description",
         "category__title",
     ]
-    filterset_fields = {
-        "status": ["exact"],
-        "priority": ["exact", "gte", "lte"],
-        "due_date": ["gte", "lte"],
-    }
+    filterset_class = TaskFilter
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
-        queryset = Task.objects.filter(users=self.request.user)
+        queryset = (
+            Task.objects.filter(
+                users=self.request.user
+            )
+            .select_related("category")
+            .prefetch_related("users")
+            .annotate(comments_count=Count("comments",distinct=True),users_count=Count("users",distinct=True),)
+        )
 
         due_date = self.request.GET.get("due_date")
+
         if due_date:
-            queryset = queryset.filter(due_date__date=due_date)
+            queryset = queryset.filter(
+                due_date__date=due_date
+            )
 
         return queryset
+    
+    def get_serializer_context(self):
+        context = super().get_serializer_context()
+        context["current_user"] = self.request.user
+
+        return context
 
     @action(methods=["GET"], detail=False, url_path="filtered-tasks")
     def filtered_tasks(self, request):
@@ -238,6 +264,22 @@ class TaskViewSet(viewsets.ModelViewSet):
             return self.get_paginated_response(serializer.data)
         serializer = self.get_serializer(tasks, many=True)
         return Response(serializer.data)
+    
+    @action(methods=["GET"], detail=False, url_path="statistics")
+    def statistics(self, request):
+        overdue_count = Task.objects.filter(
+            users=request.user,
+            due_date__lt=timezone.now()
+        ).exclude(
+            status="completed"
+        ).count()
+
+        return Response(
+            {
+                "overdue_tasks_count":
+                    overdue_count
+            }
+        )
 
     @action(methods=["POST"], detail=True, url_path="complete")
     def mark_complete(self, request, pk=None):
@@ -263,8 +305,16 @@ class TaskViewSet(viewsets.ModelViewSet):
 
 class CommentViewSet(viewsets.ModelViewSet):
     serializer_class = CommentSerializer
-    permission_classes = [IsAuthenticated]
-
     def get_queryset(self):
-        user = self.request.user
-        return Comment.objects.filter(task__users=user)
+        queryset = Comment.objects.filter(
+            task__users=self.request.user
+        ).select_related(
+            "task",
+            "user"
+        )
+        
+        task_id = self.request.GET.get("task_id")
+        if task_id:
+            queryset = queryset.filter(task_id=task_id)
+        
+        return queryset
