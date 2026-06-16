@@ -2,8 +2,9 @@ from django.contrib import messages
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
-from django.db.models import Count, Q
-from django.http import HttpResponse
+from django.db.models import Count, Q, QuerySet
+from django.http import HttpRequest, HttpResponse
+from django.http.response import HttpResponseRedirect
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 from django_filters.rest_framework import DjangoFilterBackend
