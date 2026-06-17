@@ -1,9 +1,15 @@
 from django.contrib.auth.models import User
 from django.db import models
 from simple_history.models import HistoricalRecords
-
+from __future__ import annotations
 
 class Category(models.Model):
+    """
+    Категория задач.
+
+    Используется для группировки задач по тематике
+    и визуального выделения с помощью цвета.
+    """
     COLOR_CHOICES = [
         ("#FF0000", "Красный"),
         ("#00FF00", "Зеленый"),
@@ -24,8 +30,14 @@ class Category(models.Model):
 
     history = HistoricalRecords()
 
-    def __str__(self):
-        return f"{self.title}"
+    def __str__(self) -> str:
+        """
+        Возвращает название категории.
+
+        Returns:
+            Название категории.
+        """
+        return self.title
 
     class Meta:
         verbose_name = "Категория"
@@ -34,6 +46,13 @@ class Category(models.Model):
 
 
 class Task(models.Model):
+    """
+    Модель задачи.
+
+    Содержит информацию о названии, описании,
+    статусе, приоритете, сроке выполнения,
+    категории и владельцах задачи.
+    """
     STATUS_CHOICES = [
         ("pending", "В ожидании"),
         ("in_progress", "В процессе"),
@@ -72,19 +91,35 @@ class Task(models.Model):
 
     history = HistoricalRecords()
 
-    def get_comments_preview(self, limit=5):
+    def get_comments_preview(self, limit: int = 5) -> str:
+        """
+        Возвращает краткое представление комментариев задачи.
+
+        Args:
+            limit: Максимальное количество комментариев
+                для отображения.
+
+        Returns:
+            Строка с краткой информацией о комментариях.
+        """
         comments = self.comments.select_related("user").all()[:limit]
 
         if not comments:
             return "Нет комментариев"
 
-        result = []
+        result: list[str] = []
         for comment in comments:
             result.append(f"{comment.user.username}: {comment.text[:50]}...")
 
         return "\n".join(result)
 
-    def __str__(self):
+    def __str__(self) -> str:
+        """
+        Возвращает строковое представление задачи.
+
+        Returns:
+            Название задачи.
+        """
         return f"{self.title} ({self.users})"
 
     class Meta:
@@ -93,6 +128,13 @@ class Task(models.Model):
 
 
 class Comment(models.Model):
+    """
+    Комментарий к задаче.
+
+    Хранит текст комментария, автора,
+    связанную задачу и даты создания
+    и обновления.
+    """
     task = models.ForeignKey(
         Task,
         on_delete=models.CASCADE,
@@ -125,9 +167,18 @@ class Comment(models.Model):
 
     history = HistoricalRecords()
 
-    def __str__(self):
+    def __str__(self) -> str:
+        """
+        Возвращает краткое строковое представление комментария.
+
+        Returns:
+            Информация об авторе и фрагменте комментария.
+        """
         preview = self.text[:50] + "..." if len(self.text) > 50 else self.text
-        return f"Комментарий от {self.user.username} к задаче '{self.task.title}': {preview}"
+        return (
+            f"Комментарий от {self.user.username} "
+            f"к задаче '{self.task.title}': {preview}"
+        )
 
     class Meta:
         verbose_name = "Комментарий"

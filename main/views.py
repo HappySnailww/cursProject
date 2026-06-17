@@ -28,7 +28,19 @@ from .serializers import (
 )
 
 
-def register(request):
+def register(request: HttpRequest) -> HttpResponse | HttpResponseRedirect:
+    """
+    Регистрирует нового пользователя.
+
+    Проверяет корректность введенных данных, создает пользователя
+    и выполняет автоматический вход в систему.
+
+    Args:
+        request: HTTP-запрос.
+
+    Returns:
+        Страница регистрации или перенаправление на список задач.
+    """
     if request.method == "POST":
         username = request.POST.get("username").strip()
         password = request.POST.get("password").strip()
@@ -48,7 +60,16 @@ def register(request):
     return render(request, "main/register.html")
 
 
-def login_view(request):
+def login_view(request: HttpRequest) -> HttpResponse | HttpResponseRedirect:
+    """
+    Выполняет аутентификацию пользователя.
+
+    Args:
+        request: HTTP-запрос.
+
+    Returns:
+        Страница входа или перенаправление на список задач.
+    """
     if request.method == "POST":
         username = request.POST.get("username").strip()
         password = request.POST.get("password").strip()
@@ -61,23 +82,59 @@ def login_view(request):
     return render(request, "main/login.html")
 
 
-def logout_view(request):
+def logout_view(request: HttpRequest) -> HttpResponseRedirect:
+    """
+    Завершает текущую пользовательскую сессию.
+
+    Args:
+        request: HTTP-запрос.
+
+    Returns:
+        Перенаправление на главную страницу.
+    """
     logout(request)
     return redirect("home")
 
 
-def home(request):
+def home(request: HttpRequest) -> HttpResponse:
+    """
+    Отображает главную страницу приложения.
+
+    Args:
+        request: HTTP-запрос.
+
+    Returns:
+        HTML-страница.
+    """
     return render(request, "main/home.html")
 
 
 @login_required
-def task_list(request):
+def task_list(request: HttpRequest) -> HttpResponse:
+    """
+    Отображает список задач текущего пользователя.
+
+    Args:
+        request: HTTP-запрос.
+
+    Returns:
+        HTML-страница со списком задач.
+    """
     tasks = Task.objects.filter(users=request.user).order_by("-due_date")
     return render(request, "main/task_list.html", {"tasks": tasks})
 
 
 @login_required
-def task_add(request):
+def task_add(request: HttpRequest) -> HttpResponse | HttpResponseRedirect:
+    """
+    Создает новую задачу и привязывает ее к пользователю.
+
+    Args:
+        request: HTTP-запрос.
+
+    Returns:
+        Форма создания задачи или перенаправление после сохранения.
+    """
     if request.method == "POST":
         form = TaskForm(request.POST)
         if form.is_valid():
@@ -90,7 +147,17 @@ def task_add(request):
 
 
 @login_required
-def task_edit(request, pk):
+def task_edit(request: HttpRequest, pk: int,) -> HttpResponse | HttpResponseRedirect:
+    """
+    Редактирует существующую задачу пользователя.
+
+    Args:
+        request: HTTP-запрос.
+        pk: Идентификатор задачи.
+
+    Returns:
+        Страница редактирования или перенаправление.
+    """
     try:
         task = Task.objects.get(pk=pk, users=request.user)
     except Task.DoesNotExist:
@@ -110,7 +177,17 @@ def task_edit(request, pk):
 
 
 @login_required
-def task_delete(request, pk):
+def task_delete(request: HttpRequest, pk: int,) -> HttpResponse | HttpResponseRedirect:
+    """
+    Удаляет задачу пользователя.
+
+    Args:
+        request: HTTP-запрос.
+        pk: Идентификатор задачи.
+
+    Returns:
+        Страница подтверждения удаления или перенаправление.
+    """
     try:
         task = Task.objects.get(pk=pk, users=request.user)
     except Task.DoesNotExist:
@@ -126,7 +203,17 @@ def task_delete(request, pk):
 
 
 @login_required
-def comment_add(request, task_id):
+def comment_add(request: HttpRequest, task_id: int,) -> HttpResponseRedirect:
+    """
+    Добавляет комментарий к задаче.
+
+    Args:
+        request: HTTP-запрос.
+        task_id: Идентификатор задачи.
+
+    Returns:
+        Перенаправление на список задач.
+    """
     task = get_object_or_404(Task, pk=task_id, users=request.user)
 
     if request.method == "POST":
@@ -135,7 +222,16 @@ def comment_add(request, task_id):
             Comment.objects.create(task=task, user=request.user, text=text)
     return redirect("task_list")
 
-def sentry_test(request):
+def sentry_test(request: HttpRequest) -> HttpResponse:
+    """
+    Отправляет тестовую ошибку в Sentry.
+
+    Args:
+        request: HTTP-запрос.
+
+    Returns:
+        Информация об отправке события в Sentry.
+    """
     try:
         division_by_zero = 1 / 0
     except ZeroDivisionError:
@@ -148,9 +244,21 @@ def sentry_test(request):
             return HttpResponse("Ошибка НЕ отправлена")
 
 class RegisterView(APIView):
+    """
+    API для регистрации пользователя и выдачи токена авторизации.
+    """
     permission_classes = [AllowAny]
 
-    def post(self, request):
+    def post(self, request) -> Response:
+        """
+        Создает пользователя и возвращает токен.
+
+        Args:
+            request: HTTP-запрос с регистрационными данными.
+
+        Returns:
+            Response с именем пользователя и токеном.
+        """
         serializer = RegisterSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         user = serializer.save()
@@ -164,7 +272,19 @@ class RegisterView(APIView):
 
 
 class LogoutView(APIView):
-    def post(self, request):
+    """
+    API для выхода пользователя из системы.
+    """
+    def post(self, request) -> Response:
+        """
+        Удаляет токен текущего пользователя.
+
+        Args:
+            request: HTTP-запрос.
+
+        Returns:
+            Сообщение об успешном выходе.
+        """
         try:
             request.user.auth_token.delete()
         except Token.DoesNotExist:
@@ -176,12 +296,24 @@ class LogoutView(APIView):
 
 
 class CategoryViewSet(viewsets.ReadOnlyModelViewSet):
+    """
+    ViewSet для просмотра категорий задач.
+
+    Дополнительно содержит количество выполненных задач
+    в каждой категории.
+    """
     queryset = Category.objects.annotate(completed_tasks_count=Count("task", filter=Q(task__status="completed")))
     serializer_class = CategorySerializer
     permission_classes = [IsAuthenticated]
 
 
 class TaskViewSet(viewsets.ModelViewSet):
+    """
+    CRUD API для работы с задачами пользователя.
+
+    Поддерживает фильтрацию, поиск, сортировку
+    и дополнительные пользовательские действия.
+    """
     serializer_class = TaskSerializer
 
     filter_backends = [
@@ -197,7 +329,13 @@ class TaskViewSet(viewsets.ModelViewSet):
     filterset_class = TaskFilter
     permission_classes = [IsAuthenticated]
 
-    def get_queryset(self):
+    def get_queryset(self) -> QuerySet[Task]:
+        """
+        Возвращает задачи текущего пользователя.
+
+        Returns:
+            QuerySet задач.
+        """
         queryset = (
             Task.objects.filter(
                 users=self.request.user
@@ -216,14 +354,29 @@ class TaskViewSet(viewsets.ModelViewSet):
 
         return queryset
     
-    def get_serializer_context(self):
+    def get_serializer_context(self) -> dict:
+        """
+        Передает текущего пользователя в контекст сериализатора.
+
+        Returns:
+            Словарь контекста сериализатора.
+        """
         context = super().get_serializer_context()
         context["current_user"] = self.request.user
 
         return context
 
     @action(methods=["GET"], detail=False, url_path="filtered-tasks")
-    def filtered_tasks(self, request):
+    def filtered_tasks(self, request) -> Response:
+        """
+        Возвращает задачи по сложному набору условий.
+
+        Args:
+            request: HTTP-запрос.
+
+        Returns:
+            Список отфильтрованных задач.
+        """
         user = request.user
         now = timezone.now()
 
@@ -253,7 +406,16 @@ class TaskViewSet(viewsets.ModelViewSet):
         return Response(serializer.data)
 
     @action(methods=["GET"], detail=False, url_path="overdue")
-    def overdue_tasks(self, request):
+    def overdue_tasks(self, request) -> Response:
+        """
+        Возвращает просроченные задачи пользователя.
+
+        Args:
+            request: HTTP-запрос.
+
+        Returns:
+            Список просроченных задач.
+        """
         user = request.user
         now = timezone.now()
         tasks = Task.objects.filter(
@@ -267,7 +429,16 @@ class TaskViewSet(viewsets.ModelViewSet):
         return Response(serializer.data)
     
     @action(methods=["GET"], detail=False, url_path="statistics")
-    def statistics(self, request):
+    def statistics(self, request) -> Response:
+        """
+        Возвращает статистику по задачам пользователя.
+
+        Args:
+            request: HTTP-запрос.
+
+        Returns:
+            Количество просроченных задач.
+        """
         overdue_count = Task.objects.filter(
             users=request.user,
             due_date__lt=timezone.now()
@@ -283,7 +454,17 @@ class TaskViewSet(viewsets.ModelViewSet):
         )
 
     @action(methods=["POST"], detail=True, url_path="complete")
-    def mark_complete(self, request, pk=None):
+    def mark_complete(self, request, pk: int | None = None,) -> Response:
+        """
+        Помечает задачу как выполненную.
+
+        Args:
+            request: HTTP-запрос.
+            pk: Идентификатор задачи.
+
+        Returns:
+            Обновленная задача или сообщение об ошибке.
+        """
         try:
             task = Task.objects.get(pk=pk, users=request.user)
         except Task.DoesNotExist:
@@ -305,8 +486,17 @@ class TaskViewSet(viewsets.ModelViewSet):
 
 
 class CommentViewSet(viewsets.ModelViewSet):
+    """
+    CRUD API для комментариев к задачам.
+    """
     serializer_class = CommentSerializer
-    def get_queryset(self):
+    def get_queryset(self) -> QuerySet[Comment]:
+        """
+        Возвращает комментарии к задачам текущего пользователя.
+
+        Returns:
+            QuerySet комментариев.
+        """
         queryset = Comment.objects.filter(
             task__users=self.request.user
         ).select_related(
